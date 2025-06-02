@@ -1,5 +1,8 @@
 <?php
-session_start();
+// 세션 시작은 한 번만
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 $host = "127.0.0.1";
 $db = "famarket";
@@ -8,6 +11,7 @@ $pass = "qpalzm1029!";
 
 // 세션에서 userid 가져오기
 $userid = $_SESSION['userid'] ?? null;
+
 
 if (!$userid) {
   echo "<script>alert('세션이 만료되었습니다. 다시 로그인해주세요.'); location.href='login.php';</script>";
@@ -42,8 +46,11 @@ try {
   $stmt->bindParam(':userid', $userid);
   $stmt->execute();
 
+  // 출력 버퍼 정리 (중요!)
+  ob_clean();
+  
   // 결제 완료 페이지로 이동
-  header("Location: thankyou.php");
+  header("Location: http://127.0.0.1:8000/payment/");
   exit();
 
 } catch (PDOException $e) {
