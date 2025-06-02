@@ -62,7 +62,7 @@ def update_item_stock(item_id, new_stock):
         cursor.close()
         conn.close()
 
-def update_sbtable(item_id, quantity):
+def update_sbtable(item_id, quantity, userid):  # userid 매개변수 추가
     itemname, itemprice = get_item_info(item_id)
     if itemname is None or itemprice is None:
         print(f"❌ 아이템 {item_id} 정보 불러오기 실패")
@@ -75,25 +75,25 @@ def update_sbtable(item_id, quantity):
         return
     try:
         cursor = conn.cursor()
-        # 이미 존재하는 항목인지 확인
-        cursor.execute("SELECT itemnum FROM sbtable WHERE itemid = %s", (item_id,))
+        # 이미 존재하는 항목인지 확인 (userid도 함께 확인)
+        cursor.execute("SELECT itemnum FROM sbtable WHERE itemid = %s AND userid = %s", (item_id, userid))
         result = cursor.fetchone()
         if result:
             # 이미 있으면 수량 및 총 가격 업데이트
             new_quantity = result[0] + quantity
             new_total = itemprice * new_quantity
             cursor.execute(
-                "UPDATE sbtable SET itemnum = %s, totalprice = %s WHERE itemid = %s",
-                (new_quantity, new_total, item_id)
+                "UPDATE sbtable SET itemnum = %s, totalprice = %s WHERE itemid = %s AND userid = %s",
+                (new_quantity, new_total, item_id, userid)
             )
-            print(f"✅ sbtable의 아이템 {item_id} 수량을 {new_quantity}개로 업데이트.")
+            print(f"✅ sbtable의 아이템 {item_id} 수량을 {new_quantity}개로 업데이트. (사용자: {userid})")
         else:
-            # 없으면 새로 삽입
+            # 없으면 새로 삽입 (userid 포함)
             cursor.execute(
-                "INSERT INTO sbtable (itemid, itemname, itemnum, totalprice) VALUES (%s, %s, %s, %s)",
-                (item_id, itemname, quantity, total_price)
+                "INSERT INTO sbtable (itemid, itemname, itemnum, totalprice, userid) VALUES (%s, %s, %s, %s, %s)",
+                (item_id, itemname, quantity, total_price, userid)
             )
-            print(f"✅ sbtable에 아이템 {item_id}을(를) 새로 추가했습니다.")
+            print(f"✅ sbtable에 아이템 {item_id}을(를) 새로 추가했습니다. (사용자: {userid})")
         conn.commit()
     except Error as e:
         print(f"❌ sbtable 업데이트 오류: {e}")
@@ -109,6 +109,9 @@ def display_item_stock():
             print(f"🛒 아이템 {item_id} 재고: {stock}")
 
 if __name__ == "__main__":
+    # 사용자 ID 입력 받기
+    userid = input("사용자 ID를 입력하세요: ")
+    
     while True:
         display_item_stock()
         try:
@@ -125,9 +128,9 @@ if __name__ == "__main__":
             # 재고 감소
             update_item_stock(item_id, current_stock - 1)
 
-            # 장바구니 테이블 업데이트
-            update_sbtable(item_id, 1)
+            # 장바구니 테이블 업데이트 (userid 전달)
+            update_sbtable(item_id, 1, userid)
 
-            print(f"🎉 아이템 {item_id} 1개 구매 완료!")
+            print(f"🎉 아이템 {item_id} 1개 구매 완료! (사용자: {userid})")
         except ValueError:
             print("❌ 숫자만 입력하세요.")
