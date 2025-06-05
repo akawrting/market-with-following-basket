@@ -9,28 +9,6 @@ $pass = "qpalzm1029!";
 
 // 기본값
 $username = "고객";
-
-$input_phonenum = $_SESSION['phonenum'] ?? '';
-
-if (!empty($input_phonenum)) {
-    try {
-        // DB 연결
-        $conn = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-        // 사용자 이름 조회
-        $stmt = $conn->prepare("SELECT username FROM usertbl WHERE phonenum = :phonenum");
-        $stmt->bindParam(':phonenum', $input_phonenum);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && isset($user['username'])) {
-            $username = $user['username'];
-        }
-    } catch (PDOException $e) {
-        // 오류 무시하고 기본값 유지
-    }
-}
 ?>
 
 <!DOCTYPE html>

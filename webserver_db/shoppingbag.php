@@ -101,40 +101,7 @@
   
   // 사용자 정보 가져오기
   $username = "고객";  // 기본값
-  
-  // 세션에서 전화번호 가져오기
-  $input_phonenum = $_SESSION['phonenum'] ?? '';
-  
-  if (!empty($input_phonenum)) {
-    try {
-      // DB 연결
-      $conn = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-      $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-      
-      // 전화번호로 사용자 이름 조회
-      $stmt = $conn->prepare("SELECT username FROM usertbl WHERE phonenum = :phonenum");
-      $stmt->bindParam(':phonenum', $input_phonenum);
-      $stmt->execute();
-      $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
-      
-      // 전화번호로 userid도 조회
-      $stmt = $conn->prepare("SELECT username, userid FROM usertbl WHERE phonenum = :phonenum");
-      $stmt->bindParam(':phonenum', $input_phonenum);
-      $stmt->execute();
-      $user_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-      if ($user_data) {
-        $username = $user_data['username'];
-        $_SESSION['userid'] = $user_data['userid'];  // 이 줄을 추가
-      }
-
-      if ($user_data && isset($user_data['username'])) {
-        $username = $user_data['username'];
-      }
-    } catch (PDOException $e) {
-      // 오류 발생 시 기본값 사용
-    }
-  }
   ?>
 
   <div class="header">

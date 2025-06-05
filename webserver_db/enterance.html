@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMS 인증</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .main-container {
+      display: flex;
+      width: 90%;
+      max-width: 1200px;
+      background-color: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .auth-container {
+      flex: 1;
+      padding: 40px;
+      text-align: center;
+    }
+    
+    .qr-container {
+  width: 40%;
+  background-color: #f7f9fc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  border-left: 1px solid #eaeaea;
+  }
+
+  .qr-code {
+    width: 90%;
+    max-width: 400px;
+  }
+
+    
+    .qr-text {
+      font-size: 18px;
+      color: #555;
+      text-align: center;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      color: #333;
+      font-size: 32px;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    
+    .input-group {
+      position: relative;
+      margin-bottom: 25px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 15px 20px;
+      border: none;
+      background-color: #f7f9fc;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+    
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #4a90e2;
+    }
+    
+    button {
+      background: linear-gradient(45deg, #4a90e2, #5ca9fb);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 15px 25px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 15px rgba(74, 144, 226, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    #welcome {
+      display: none;
+      margin-top: 30px;
+      animation: fadeIn 1s;
+    }
+    
+    .success-icon {
+      font-size: 60px;
+      color: #4CAF50;
+      margin-bottom: 15px;
+    }
+    
+    .success-text {
+      font-size: 24px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .timer {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4a90e2;
+      font-size: 14px;
+      font-weight: 500;
+      display: none;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    /* 키패드 스타일 */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .key {
+      background-color: #f7f9fc;
+      border: none;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .key:hover {
+      background-color: #e8f0fe;
+    }
+    
+    .key:active {
+      transform: scale(0.95);
+      background-color: #d8e5f5;
+    }
+    
+    .key-func {
+      background-color: #f0f0f0;
+      font-weight: 600;
+    }
+    
+    .key-delete {
+      background-color: #ffebee;
+      color: #e53935;
+    }
+    
+    .input-display {
+      margin-bottom: 10px;
+      font-size: 24px;
+      letter-spacing: 5px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .tab-container {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    
+    .tab.active {
+      color: #4a90e2;
+      border-bottom: 2px solid #4a90e2;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <div class="auth-container">
+    <h1>휴대폰 번호 인증</h1>
+    
+    <div class="tab-container">
+      <div class="tab active" onclick="switchTab('phone-tab')">전화번호 입력</div>
+      <div class="tab" onclick="switchTab('code-tab')">인증번호 확인</div>
+    </div>
+    
+        <div id="phone-tab" class="tab-content active">
+      <div class="input-group">
+        <div class="input-display" id="phone-display">010-</div>
+        <input id="phone" type="hidden">
+      </div>
+      
+      <div class="keypad">
+        <button class="key" onclick="addDigit('1')">1</button>
+        <button class="key" onclick="addDigit('2')">2</button>
+        <button class="key" onclick="addDigit('3')">3</button>
+        <button class="key" onclick="addDigit('4')">4</button>
+        <button class="key" onclick="addDigit('5')">5</button>
+        <button class="key" onclick="addDigit('6')">6</button>
+        <button class="key" onclick="addDigit('7')">7</button>
+        <button class="key" onclick="addDigit('8')">8</button>
+        <button class="key" onclick="addDigit('9')">9</button>
+        <button class="key key-func" onclick="clearInput()">C</button>
+        <button class="key" onclick="addDigit('0')">0</button>
+        <button class="key key-delete" onclick="deleteDigit()">←</button>
+      </div>
+      
+      <button onclick="sendSMS()" id="sendBtn">인증번호 발송</button>
+    </div>
+    
+    <div id="code-tab" class="tab-content">
+      <div class="input-group">
+        <div class="input-display" id="code-display">
+          <span class="code-digit"></span>
+          <span class="code-digit"></span>
+          <span class="code-digit"></span>
+          <span class="code-digit"></span>
+          <span class="code-digit"></span>
+          <span class="code-digit"></span>
+        </div>
+        <input id="code" type="hidden">
+        <div class="timer" id="timer">3:00</div>
+      </div>
+      
+      <div class="keypad">
+        <button class="key" onclick="addCodeDigit('1')">1</button>
+        <button class="key" onclick="addCodeDigit('2')">2</button>
+        <button class="key" onclick="addCodeDigit('3')">3</button>
+        <button class="key" onclick="addCodeDigit('4')">4</button>
+        <button class="key" onclick="addCodeDigit('5')">5</button>
+        <button class="key" onclick="addCodeDigit('6')">6</button>
+        <button class="key" onclick="addCodeDigit('7')">7</button>
+        <button class="key" onclick="addCodeDigit('8')">8</button>
+        <button class="key" onclick="addCodeDigit('9')">9</button>
+        <button class="key key-func" onclick="clearCodeInput()">C</button>
+        <button class="key" onclick="addCodeDigit('0')">0</button>
+        <button class="key key-delete" onclick="deleteCodeDigit()">←</button>
+      </div>
+      
+      <button onclick="verifyCode()" id="verifyBtn">인증 확인</button>
+    </div>
+    
+    <div id="welcome">
+      <div class="success-icon">✓</div>
+      <div class="success-text">인증이 완료되었습니다!</div>
+    </div>
+  </div>
+  
+  <div class="qr-container">
+    <img src="img/signup_qrcode.png" alt="QR 코드" class="qr-code">
+  </div>
+</div>
+
+<script>
+let timerInterval;
+let phoneValue = '';
+let codeValue = '';
+
+function switchTab(tabId) {
+  // 모든 탭 비활성화
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // 모든 탭 콘텐츠 숨기기
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  
+  // 선택한 탭 활성화
+  document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function formatPhoneNumber(phone) {
+  if (phone.length <= 3) {
+    return phone;
+  } else if (phone.length <= 7) {
+    return phone.slice(0, 3) + '-' + phone.slice(3);
+  } else {
+    return phone.slice(0, 3) + '-' + phone.slice(3, 7) + '-' + phone.slice(7);
+  }
+}
+
+function addDigit(digit) {
+  if (phoneValue.length < 11) {
+    phoneValue += digit;
+    document.getElementById('phone-display').textContent = formatPhoneNumber(phoneValue);
+    document.getElementById('phone').value = phoneValue;
+  }
+}
+
+function deleteDigit() {
+  if (phoneValue.length > 0) {
+    phoneValue = phoneValue.slice(0, -1);
+    document.getElementById('phone-display').textContent = phoneValue.length > 0 ? 
+      formatPhoneNumber(phoneValue) : '010-';
+    document.getElementById('phone').value = phoneValue;
+  }
+}
+
+function clearInput() {
+  phoneValue = '';
+  document.getElementById('phone-display').textContent = '010-';
+  document.getElementById('phone').value = '';
+}
+
+function addCodeDigit(digit) {
+  if (codeValue.length < 6) {
+    codeValue += digit;
+    updateCodeDisplay();
+    document.getElementById('code').value = codeValue;
+    
+    // 6자리 다 입력하면 자동 인증
+    if (codeValue.length === 6) {
+      setTimeout(() => verifyCode(), 300);
+    }
+  }
+}
+
+function updateCodeDisplay() {
+  const digits = document.querySelectorAll('.code-digit');
+  
+  digits.forEach((digit, index) => {
+    if (index < codeValue.length) {
+      digit.textContent = '●';
+    } else {
+      digit.textContent = '';
+    }
+  });
+}
+
+function deleteCodeDigit() {
+  if (codeValue.length > 0) {
+    codeValue = codeValue.slice(0, -1);
+    updateCodeDisplay();
+    document.getElementById('code').value = codeValue;
+  }
+}
+
+function clearCodeInput() {
+  codeValue = '';
+  updateCodeDisplay();
+  document.getElementById('code').value = '';
+}
+
+function startTimer(duration) {
+  const timer = document.getElementById('timer');
+  timer.style.display = 'block';
+  
+  let timeLeft = duration;
+  timerInterval = setInterval(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    
+    timer.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    
+    if (--timeLeft < 0) {
+      clearInterval(timerInterval);
+      timer.textContent = '만료됨';
+      timer.style.color = '#ff3b30';
+    }
+  }, 1000);
+}
+
+function sendSMS() {
+  if (phoneValue.length !== 11) {
+    alert("올바른 전화번호 형식을 입력해주세요 (예: 01012345678)");
+    return;
+  }
+
+  // 타이머 재설정
+  clearInterval(timerInterval);
+  startTimer(180); // 3분 타이머
+  
+  document.getElementById("sendBtn").textContent = "인증번호 재발송";
+  
+  // 인증번호 탭으로 전환
+  switchTab('code-tab');
+  
+  fetch("send_code.php", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: "phone=" + encodeURIComponent(phoneValue)
+  })
+  .then(res => res.text())
+  .then(msg => {
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '30px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    toast.style.color = 'white';
+    toast.style.padding = '12px 20px';
+    toast.style.borderRadius = '8px';
+    toast.style.zIndex = '1000';
+    toast.textContent = '인증번호가 발송되었습니다';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.5s';
+      setTimeout(() => document.body.removeChild(toast), 500);
+    }, 2000);
+  })
+  .catch(err => alert("오류가 발생했습니다: " + err));
+}
+
+function verifyCode() {
+  if (codeValue.length !== 6) {
+    alert("6자리 인증번호를 모두 입력해주세요");
+    return;
+  }
+
+  document.getElementById("verifyBtn").textContent = "인증 확인 중...";
+  document.getElementById("verifyBtn").disabled = true;
+
+  fetch("verify_code.php", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: "phone=" + encodeURIComponent(phoneValue) + "&code=" + encodeURIComponent(codeValue)
+  })
+  .then(res => res.text())
+  .then(result => {
+    if (result === "success") {
+      clearInterval(timerInterval);
+      document.getElementById("welcome").style.display = "block";
+      
+      // 성공 애니메이션 효과
+      document.querySelectorAll('.keypad, .input-group, .tab-container').forEach(el => {
+        el.style.opacity = '0.5';
+        el.style.pointerEvents = 'none';
+      });
+      
+      document.getElementById("verifyBtn").style.opacity = '0.5';
+      document.getElementById("verifyBtn").disabled = true;
+      
+      // 바로 리다이렉트
+      setTimeout(() => {
+        location.href = "shoppingbag.php";
+      }, 1000);
+    } else {
+      document.getElementById("verifyBtn").textContent = "인증 확인";
+      document.getElementById("verifyBtn").disabled = false;
+      
+      // 실패 시 흔들림 효과
+      const codeDigits = document.querySelectorAll('.code-digit');
+      codeDigits.forEach(digit => {
+        digit.style.animation = "shake 0.5s";
+        digit.style.color = "#ff3b30";
+      });
+      
+      setTimeout(() => {
+        codeDigits.forEach(digit => {
+          digit.style.animation = "";
+          digit.style.color = "";
+        });
+      }, 500);
+      
+      alert("인증번호가 일치하지 않습니다. 다시 확인해주세요.");
+      clearCodeInput();
+    }
+  })
+  .catch(err => {
+    document.getElementById("verifyBtn").textContent = "인증 확인";
+    document.getElementById("verifyBtn").disabled = false;
+    alert("오류가 발생했습니다: " + err);
+  });
+}
+</script>
+
+</body>
+</html>
+
+
