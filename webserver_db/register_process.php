@@ -30,21 +30,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "phonenum 값: " . $phonenum . "<br>";
         
         if ($insert_stmt->execute()) {
-            // datatbl에도 userid, username 추가
-            $insert_data_stmt = $conn->prepare("INSERT INTO datatbl (userid, username) VALUES (?, ?)");
-            $insert_data_stmt->bind_param("ss", $userid, $username);
-            $insert_data_stmt->execute();
-            $insert_data_stmt->close();
 
             // 세션에 사용자 정보 저장
             session_start();
             $_SESSION['userid'] = $userid;
             $_SESSION['username'] = $username;
             
-            // 회원가입 성공 메시지 표시 후 info.php로 리다이렉트
+            // 회원가입 성공 메시지 표시 후 main.php로 리다이렉트
             echo "<script>
                     alert('회원가입이 완료되었습니다!');
-                    location.href = 'info.php';
+                    location.href = 'main.php';
                   </script>";
         } else {
             echo "<script>
