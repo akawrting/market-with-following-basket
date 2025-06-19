@@ -2,34 +2,44 @@
 // 세션 시작
 session_start();
 
-// 로그인 상태 확인
+// 데이터베이스 연결
+require_once 'db_connect.php';
+
+// 로그인 상태 확인 (userid가 세션에 저장되어 있는지)
 if (!isset($_SESSION['userid'])) {
     // 로그인되지 않은 경우 로그인 페이지로 리다이렉트
     header("Location: login.php");
     exit;
 }
 
-// 데이터베이스 연결
-require_once 'db_connect.php';
+$userid = $_SESSION['userid'];
 
 // 사용자 정보 가져오기
-$userid = $_SESSION['userid'];
-$stmt = $conn->prepare("SELECT username, points FROM usertbl WHERE userid = ?");
+$stmt = $conn->prepare("SELECT * FROM usertbl WHERE userid = ?");
 $stmt->bind_param("s", $userid);
 $stmt->execute();
-$result = $stmt->get_result();
+$user_result = $stmt->get_result();
 
-if ($row = $result->fetch_assoc()) {
-    $username = $row['username'];
-    $points = $row['points'] ?? 0; // points 컬럼이 없으면 0으로 설정
-} else {
-    // 사용자 정보를 찾을 수 없는 경우
-    $username = "알 수 없음";
-    $points = 0;
+if ($user_result->num_rows == 0) {
+    // 사용자 정보가 없는 경우
+    echo "사용자 정보를 찾을 수 없습니다.";
+    exit;
 }
 
-$stmt->close();
-$conn->close();
+$user = $user_result->fetch_assoc();
+
+// 구매 내역 가져오기
+$stmt = $conn->prepare("
+    SELECT ph.*, COUNT(pi.item_id) as item_count 
+    FROM purchase_history ph
+    LEFT JOIN purchase_items pi ON ph.purchase_id = pi.purchase_id
+    WHERE ph.userid = ?
+    GROUP BY ph.purchase_id
+    ORDER BY ph.purchase_date DESC
+");
+$stmt->bind_param("s", $user['userid']);
+$stmt->execute();
+$purchases_result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -37,94 +47,220 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>메인 페이지</title>
+    <title>마이페이지</title>
     <style>
-        body {
+        * {
+            box-sizing: border-box;
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             margin: 0;
-            padding: 0;
+            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
         
         .container {
+            max-width: 800px;
+            margin: 0 auto;
             background-color: white;
             border-radius: 20px;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 600px;
-            padding: 40px;
-            text-align: center;
+            padding: 30px;
         }
         
-        h1 {
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .logo {
+            max-width: 120px;
+        }
+        
+        h1, h2, h3 {
             color: #333;
+            margin-top: 0;
+        }
+        
+        .user-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
             margin-bottom: 30px;
         }
         
-        .point-info {
+        .points {
             font-size: 24px;
-            margin: 30px 0;
-            padding: 20px;
-            background-color: #f7f9fc;
-            border-radius: 12px;
-        }
-        
-        .point-value {
-            color: #4a90e2;
             font-weight: bold;
-            font-size: 32px;
+            color: #4CAF50;
         }
         
-        .menu {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
+        .purchase-list {
             margin-top: 30px;
         }
         
-        .menu-btn {
-            background: linear-gradient(45deg, #4a90e2, #5ca9fb);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 15px 25px;
-            font-size: 16px;
-            font-weight: 500;
+        .purchase-item {
+            background-color: white;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
-            min-width: 150px;
         }
         
-        .menu-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 15px rgba(74, 144, 226, 0.4);
+        .purchase-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .purchase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .purchase-date {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .purchase-amount {
+            font-weight: bold;
+            color: #495057;
+            font-size: 18px;
+        }
+        
+        .purchase-details {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .item-table th, .item-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .item-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
         }
         
         .logout-btn {
-            background: #f0f0f0;
-            color: #666;
-            margin-top: 30px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        
+        .logout-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        .no-purchases {
+            text-align: center;
+            padding: 40px 0;
+            color: #6c757d;
+            font-size: 18px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>안녕하세요, <?php echo $username; ?>님!</h1>
+        <header>
+            <h1>마이페이지</h1>
+            <form action="logout.php" method="post">
+                <button type="submit" class="logout-btn">로그아웃</button>
+            </form>
+        </header>
         
-        <div class="point-info">
-            적립된 포인트: <span class="point-value"><?php echo number_format($points); ?>P</span>
+        <div class="user-info">
+            <h2><?php echo htmlspecialchars($user['username']); ?>님 환영합니다!</h2>
+            <p>전화번호: <?php echo htmlspecialchars($user['phonenum']); ?></p>
+            <p>보유 포인트: <span class="points"><?php echo number_format($user['points']); ?> P</span></p>
         </div>
         
-        <div class="menu">
-            <a href="info.php"><button class="menu-btn">내 정보</button></a>
-            <a href="logout.php"><button class="menu-btn logout-btn">로그아웃</button></a>
+        <div class="purchase-list">
+            <h2>구매 내역</h2>
+            
+            <?php if ($purchases_result->num_rows > 0): ?>
+                <?php while ($purchase = $purchases_result->fetch_assoc()): ?>
+                    <div class="purchase-item" onclick="toggleDetails(<?php echo $purchase['purchase_id']; ?>)">
+                        <div class="purchase-header">
+                            <div class="purchase-date"><?php echo date('Y년 m월 d일 H:i', strtotime($purchase['purchase_date'])); ?></div>
+                            <div class="purchase-amount"><?php echo number_format($purchase['total_amount']); ?>원</div>
+                        </div>
+                        <div>구매 상품 <?php echo $purchase['item_count']; ?>개</div>
+                        
+                        <div id="details-<?php echo $purchase['purchase_id']; ?>" class="purchase-details">
+                            <?php
+                            // 구매 상세 내역 가져오기
+                            $detail_stmt = $conn->prepare("
+                                SELECT * FROM purchase_items 
+                                WHERE purchase_id = ?
+                                ORDER BY itemname
+                            ");
+                            $detail_stmt->bind_param("i", $purchase['purchase_id']);
+                            $detail_stmt->execute();
+                            $items_result = $detail_stmt->get_result();
+                            ?>
+                            
+                            <table class="item-table">
+                                <thead>
+                                    <tr>
+                                        <th>상품명</th>
+                                        <th>수량</th>
+                                        <th>가격</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php while ($item = $items_result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($item['itemname']); ?></td>
+                                        <td><?php echo $item['itemnum']; ?>개</td>
+                                        <td><?php echo number_format($item['totalprice']); ?>원</td>
+                                    </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            <?php else: ?>
+                <div class="no-purchases">
+                    <p>아직 구매 내역이 없습니다.</p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
+
+    <script>
+        function toggleDetails(purchaseId) {
+            var detailsDiv = document.getElementById('details-' + purchaseId);
+            if (detailsDiv.style.display === 'block') {
+                detailsDiv.style.display = 'none';
+            } else {
+                detailsDiv.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 </html>

@@ -72,12 +72,36 @@ session_start();
 </head>
 <body>
     <div class="container">
-        <img src="img/logo.png" alt="로고" class="logo">
+        <img src="img/logo.jpg" alt="로고" class="logo">
         <h1>스마트 쇼핑을 시작하세요!</h1>
         
-        <form action="start_shopping.php" method="post">
+        <form action="openning_door.php" method="post">
             <button type="submit" class="start-btn">장바구니 시작</button>
         </form>
     </div>
+</body>
+<script>
+    // 페이지 로드 시 장바구니 비우기 실행
+    window.onload = function() {
+        clearCart();
+    }
+    
+    // 장바구니 비우기 함수
+    function clearCart() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'clear_cart.php', true);  // PHP 파일로 요청
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                console.log('장바구니가 성공적으로 비워졌습니다.');
+            } else {
+                console.error('장바구니 비우기 실패');
+            }
+        };
+        
+        xhr.send();
+    }
+</script>
 </body>
 </html>
