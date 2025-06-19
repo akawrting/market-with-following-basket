@@ -4,9 +4,11 @@ require_once 'db_connect.php';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $userid    = trim($_POST['username']);   // 사용자 ID
     $username  = trim($_POST['name']);       // 실제 이름
-    $useremail = trim($_POST['email']);      // 이메일
+    // 이메일 필드 처리 (빈 값 허용)
+    $useremail = isset($_POST['email']) && !empty($_POST['email']) ? trim($_POST['email']) : null;
     $userpw    = password_hash(trim($_POST['password']), PASSWORD_DEFAULT); // 비밀번호 해싱
-    $phonenum  = trim($_POST['phone']);      // 전화번호
+    session_start();
+    $phonenum = $_SESSION['verified_phone'] ?? '';
 
     // 아이디 중복 확인
     $check_stmt = $conn->prepare("SELECT userid FROM usertbl WHERE userid = ?");
@@ -20,48 +22,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 history.back();
               </script>";
     } else {
-        // 회원 정보 삽입
+        // 회원 정보 삽입 부분 수정
         $insert_stmt = $conn->prepare("INSERT INTO usertbl (userid, username, email, password, phonenum) VALUES (?, ?, ?, ?, ?)");
         $insert_stmt->bind_param("sssss", $userid, $username, $useremail, $userpw, $phonenum);
 
+        // 쿼리 실행 전에 변수 값 확인
+        echo "phonenum 값: " . $phonenum . "<br>";
+        
         if ($insert_stmt->execute()) {
-            // datatbl에도 userid, username 추가
-            $insert_data_stmt = $conn->prepare("INSERT INTO datatbl (userid, username) VALUES (?, ?)");
-            $insert_data_stmt->bind_param("ss", $userid, $username);
-            $insert_data_stmt->execute();
-            $insert_data_stmt->close();
 
-            // 얼굴 등록용 페이지로 이동 + PyQt에게 user_id 전달
-            $user_id_for_face = $userid; 
-
-            echo "
-                <html>
-                <head>
-                    <meta charset='UTF-8'>
-                    <script type='text/javascript' src='qrc:///qtwebchannel/qwebchannel.js'></script>
-                </head>
-                <body>
-                    <h3>얼굴 등록 중입니다. 잠시만 기다려주세요...</h3>
-                    <script>
-                        new QWebChannel(qt.webChannelTransport, function(channel) {
-                            var bridge = channel.objects.bridge;
-                            var user_id = " . json_encode($user_id_for_face) . ";
-                            console.log('전달할 user_id:', user_id);
-                            bridge.onFormSubmitted(user_id);  // PyQt 슬롯 호출
-
-                            setTimeout(function() {
-                                window.location.href = 'face_register.php?user_id=' + user_id;
-                            }, 1000);
-                        });
-                    </script>
-                </body>
-                </html>
-            ";
+            // 세션에 사용자 정보 저장
+            session_start();
+            $_SESSION['userid'] = $userid;
+            $_SESSION['username'] = $username;
+            
+            // 회원가입 성공 메시지 표시 후 main.php로 리다이렉트
+            echo "<script>
+                    alert('회원가입이 완료되었습니다!');
+                    location.href = 'main.php';
+                  </script>";
         } else {
             echo "<script>
-                    alert('오류가 발생했습니다: " . $conn->error . "');
-                    history.back();
-                  </script>";
+            alert('오류가 발생했습니다: " . $insert_stmt->error . "');
+            history.back();
+            </script>";
+            exit;
         }
         $insert_stmt->close();
     }

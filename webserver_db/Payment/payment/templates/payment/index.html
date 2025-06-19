@@ -3,14 +3,146 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=5.0">
-    <title>Index Page</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 페이지</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            color: #343a40;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .cart-table th {
+            background-color: #f1f3f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .cart-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .cart-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .total-row {
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+        
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: right;
+            padding: 20px 0;
+            color: #495057;
+            border-top: 2px solid #dee2e6;
+            margin-top: 20px;
+        }
+        
+        .pay-button {
+            background-color: #4263eb;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+        
+        .pay-button:hover {
+            background-color: #364fc7;
+        }
+        
+        .item-name {
+            font-weight: 500;
+        }
+        
+        .item-price {
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .item-quantity {
+            text-align: center;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 30px;
+            color: #868e96;
+        }
+    </style>
 </head>
-    <body>
-        <p id="pay-amount" data-amount="{{pay_amount}}">결제 금액: {{ pay_amount }}원</p>
-        <button id="payButton">Pay now!</button>
-        <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
-        <script src="{% static 'payment/main.js' %}"></script>
-    </body>
+<body>
+    <div class="container">
+        <h1>결제 정보</h1>
+        
+        {% if sbtable %}
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>상품명</th>
+                    <th>수량</th>
+                    <th>가격</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sbtable %}
+                <tr>
+                    <td class="item-name">{{ item.itemname }}</td>
+                    <td class="item-quantity">{{ item.itemnum }}개</td>
+                    <td class="item-price">{{ item.totalprice }}원</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="total-amount">
+            결제 금액: <span id="pay-amount" data-amount="{{pay_amount}}">{{ pay_amount }}원</span>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            장바구니에 상품이 없습니다.
+        </div>
+        {% endif %}
+        
+        <button id="payButton" class="pay-button">결제하기</button>
+    </div>
+    
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script src="{% static 'payment/main.js' %}"></script>
+</body>
 </html>

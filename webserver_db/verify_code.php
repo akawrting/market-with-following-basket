@@ -6,8 +6,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["phone"]) && isset($_P
     $code = $_POST["code"];
 
     if (isset($_SESSION['verify_codes'][$phone]) && $_SESSION['verify_codes'][$phone] == $code) {
-        // 인증 성공
-        unset($_SESSION['verify_codes'][$phone]);  // 한 번 사용된 인증번호는 삭제
+        unset($_SESSION['verify_codes'][$phone]);
+
+        // ✅ 인증 완료된 전화번호를 세션에 저장
+        $_SESSION['verified_phone'] = $phone;
+
         echo "success";
     } else {
         echo "fail";
@@ -15,4 +18,3 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["phone"]) && isset($_P
 } else {
     echo "잘못된 요청입니다.";
 }
-?>

@@ -233,17 +233,15 @@
             </div>
             
             <div class="form-group">
-                <label for="email">이메일 <span style="color:#888; font-size:14px; font-weight:normal;">(선택사항)</span></label>
-                <input type="email" id="email" name="email" placeholder="이메일을 입력하세요 (선택사항)">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" required>
             </div>
-
 
             <div class="form-group phone-verification">
                 <label for="phone">전화번호</label>
                 <div class="input-with-button">
                     <input type="tel" id="phone" name="phone" placeholder="01012345678" required>
                     <button type="button" id="send-code-btn" class="verification-btn">인증번호 발송</button>
-
                 </div>
             </div>
 
@@ -375,7 +373,7 @@
         });
         
         // 인증번호 확인
-
+        // 인증번호 확인
 document.getElementById('verify-code-btn').addEventListener('click', function() {
     const phone = document.getElementById('phone').value;
     const code = document.getElementById('verify_code').value;
