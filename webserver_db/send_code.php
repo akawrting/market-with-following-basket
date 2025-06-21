@@ -5,8 +5,8 @@ session_start();
 require_once __DIR__ . '/coolsms-php-master/lib/message.php';
 
 // API key & secret
-$api_key = 'NCSVQLJD5KNJ8VLS';
-$api_secret = 'OEFYD9TOSPGWJXB3SRSOGX4P6NZNS4JH';
+$api_key = 'YOUR_API_KEY_HERE';
+$api_secret = 'YOUR_API_SECRET_HERE';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["phone"])) {
     $phone = $_POST["phone"];
