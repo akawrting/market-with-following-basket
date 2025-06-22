@@ -160,7 +160,7 @@ $purchases_result = $stmt->get_result();
             font-weight: 600;
         }
         
-        .logout-btn, .edit-btn {
+        .logout-btn {
             background-color: #6c757d;
             color: white;
             border: none;
@@ -169,19 +169,10 @@ $purchases_result = $stmt->get_result();
             cursor: pointer;
             transition: background-color 0.3s;
             font-size: 14px;
-            margin-left: 10px; /* 버튼 간 간격 추가 */
-        }
-        
-        .edit-btn {
-            background-color: #007bff; /* 수정 버튼 색상 */
         }
         
         .logout-btn:hover {
             background-color: #5a6268;
-        }
-        
-        .edit-btn:hover {
-            background-color: #0069d9;
         }
         
         .no-purchases {
@@ -190,101 +181,20 @@ $purchases_result = $stmt->get_result();
             color: #6c757d;
             font-size: 18px;
         }
-        
-        /* 모달 스타일 */
-        .modal {
-            display: none; /* 기본적으로 숨김 */
-            position: fixed; /* 화면에 고정 */
-            z-index: 1; /* 다른 요소 위에 표시 */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto; /* 내용이 넘치면 스크롤 */
-            background-color: rgba(0,0,0,0.4); /* 반투명 배경 */
-        }
-        
-        .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto; /* 화면 중앙에 위치 */
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            width: 80%;
-            max-width: 500px; /* 최대 너비 설정 */
-        }
-        
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .close:hover {
-            color: black;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-        }
-        
-        .radio-group {
-            display: flex;
-            gap: 20px; /* 라디오 버튼 간격 */
-        }
-        
-        .submit-btn {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-        
-        .submit-btn:hover {
-            background-color: #218838;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>마이페이지</h1>
-            <div>
-                <button id="editProfileBtn" class="edit-btn">회원정보 수정</button>
-                <form action="logout.php" method="post" style="display: inline;">
-                    <button type="submit" class="logout-btn">로그아웃</button>
-                </form>
-            </div>
+            <form action="logout.php" method="post">
+                <button type="submit" class="logout-btn">로그아웃</button>
+            </form>
         </header>
         
         <div class="user-info">
             <h2><?php echo htmlspecialchars($user['username']); ?>님 환영합니다!</h2>
             <p>전화번호: <?php echo htmlspecialchars($user['phonenum']); ?></p>
-            <?php if(!empty($user['gender'])): // 성별 정보가 있을 경우에만 표시 ?>
-            <p>성별: <?php echo $user['gender'] == 'M' ? '남성' : '여성'; ?></p>
-            <?php endif; ?>
-            <?php if(!empty($user['yyyymmdd'])): // 생년월일 정보가 있을 경우에만 표시 ?>
-            <p>생년월일: <?php echo substr($user['yyyymmdd'], 0, 4) . '년 ' . substr($user['yyyymmdd'], 4, 2) . '월 ' . substr($user['yyyymmdd'], 6, 2) . '일'; ?></p>
-            <?php endif; ?>
             <p>보유 포인트: <span class="points"><?php echo number_format($user['points']); ?> P</span></p>
         </div>
         
@@ -342,58 +252,13 @@ $purchases_result = $stmt->get_result();
         </div>
     </div>
 
-    <!-- 회원정보 수정 모달 -->
-    <div id="editProfileModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>회원정보 수정</h2>
-            <form action="update_profile.php" method="post">
-                <div class="form-group">
-                    <label for="gender">성별</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="gender" value="M" <?php echo ($user['gender'] == 'M') ? 'checked' : ''; ?>> 남성</label>
-                        <label><input type="radio" name="gender" value="F" <?php echo ($user['gender'] == 'F') ? 'checked' : ''; ?>> 여성</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="yyyymmdd">생년월일 (YYYYMMDD)</label>
-                    <input type="text" id="yyyymmdd" name="yyyymmdd" class="form-control" value="<?php echo htmlspecialchars($user['yyyymmdd']); ?>" placeholder="예: 19900101" maxlength="8">
-                </div>
-                <button type="submit" class="submit-btn">저장</button>
-            </form>
-        </div>
-    </div>
-
     <script>
-        // 구매 내역 상세 보기 토글
         function toggleDetails(purchaseId) {
             var detailsDiv = document.getElementById('details-' + purchaseId);
             if (detailsDiv.style.display === 'block') {
                 detailsDiv.style.display = 'none';
             } else {
                 detailsDiv.style.display = 'block';
-            }
-        }
-
-        // 회원정보 수정 모달 관련 스크립트
-        var modal = document.getElementById("editProfileModal");
-        var btn = document.getElementById("editProfileBtn");
-        var span = document.getElementsByClassName("close")[0];
-
-        // 버튼 클릭 시 모달 열기
-        btn.onclick = function() {
-            modal.style.display = "block";
-        }
-
-        // <span> (x) 클릭 시 모달 닫기
-        span.onclick = function() {
-            modal.style.display = "none";
-        }
-
-        // 모달 외부 클릭 시 모달 닫기
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
             }
         }
     </script>
