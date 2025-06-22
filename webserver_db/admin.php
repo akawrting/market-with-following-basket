@@ -42,6 +42,7 @@ try {
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 페이지</title>
@@ -261,6 +262,143 @@ try {
         .inventory-btn:hover {
             background-color: #2980b9;
         }
+        /* 기존 스타일에 추가 */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2열 그리드 */
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .stats-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .stats-card.wide {
+        grid-column: span 2; /* 2열을 모두 차지 */
+    }
+
+    .popular-items-list {
+        margin-top: 15px;
+    }
+
+    .popular-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .popular-item:last-child {
+        border-bottom: none;
+    }
+
+    .popular-item-age, .popular-item-gender {
+        font-weight: 600;
+        color: #4CAF50; /* 강조 색상 */
+        min-width: 80px; /* 정렬을 위해 최소 너비 지정 */
+    }
+
+    .popular-item-name {
+        flex-grow: 1;
+        margin: 0 10px;
+    }
+
+    .popular-item-quantity {
+        font-weight: 500;
+        color: #555;
+        min-width: 50px; /* 정렬을 위해 최소 너비 지정 */
+        text-align: right;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr; /* 모바일에서는 1열로 변경 */
+            gap: 10px; /* 모바일 간격도 줄이기 */
+        }
+        .stats-card.wide {
+            grid-column: span 1; /* 모바일에서는 1열로 변경 */
+        }
+    }
+    /* 기존 스타일에 추가 */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 반응형 3열 */
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        background: linear-gradient(45deg, #ffffff, #f8f9fa);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-icon {
+        font-size: 40px;
+        color: #6c5ce7; /* 보라색 계열 */
+        margin-right: 20px;
+        background-color: rgba(108, 92, 231, 0.1);
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card-content {
+        flex-grow: 1;
+    }
+
+    .card-title {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .card-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    /* 아이콘 색상 커스터마이징 (선택 사항) */
+    .summary-card:nth-child(1) .card-icon { color: #2dce89; background-color: rgba(45, 206, 137, 0.1); } /* 초록색 */
+    .summary-card:nth-child(2) .card-icon { color: #f5365c; background-color: rgba(245, 54, 92, 0.1); } /* 빨간색 */
+    .summary-card:nth-child(3) .card-icon { color: #11cdef; background-color: rgba(17, 205, 239, 0.1); } /* 하늘색 */
+
+    /* 반응형 디자인 (모바일에서 1열) */
+    @media (max-width: 768px) {
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+        .summary-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        .card-icon {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+    }
+
+
 
     </style>
 </head>
@@ -296,6 +434,7 @@ try {
                 <div class="tab-buttons">
                     <button class="tab-btn active" onclick="openTab('members')">회원 관리</button>
                     <button class="tab-btn" onclick="openTab('purchases')">구매 내역</button>
+                     <button class="tab-btn" onclick="openTab('statistics')">구매 통계</button>
                 </div>
                 
                 <!-- 회원 관리 탭 -->
@@ -383,7 +522,69 @@ try {
                     </table>
                 </div>
             </div>
-            
+            <!-- 구매 통계 탭 -->
+            <div id="statistics" class="tab-content">
+                <h2>구매 통계 분석</h2>
+                
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">총 매출</div>
+                            <div class="card-value" id="totalSales">0원</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">총 구매 건수</div>
+                            <div class="card-value" id="totalPurchases">0건</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-icon"><i class="fas fa-users"></i></div>
+                        <div class="card-content">
+                            <div class="card-title">총 회원 수</div>
+                            <div class="card-value" id="totalUsers">0명</div>
+                        </div>
+                    </div>
+                </div>
+                <h2>구매 통계</h2>
+                
+                <div class="chart-container">
+                    <h3>나이대별 구매 통계</h3>
+                    <canvas id="ageChart" style="height: 200px;"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>성별 구매 통계</h3>
+                    <canvas id="genderChart" style="height: 200px;"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3>인기 상품 TOP 5</h3>
+                    <canvas id="popularItemsChart" style="height: 200px;"></canvas>
+                </div>
+
+                <div class="stats-card wide">
+                    <h3>월별 매출 추이 (최근 6개월)</h3>
+                    <canvas id="monthlySalesChart" style="height: 200px;"></canvas> <!-- 높이 조절 -->
+                </div>
+                <!-- 새로 추가되는 섹션 -->
+                <div class="stats-card">
+                    <h3>나이대별 가장 많이 구매한 상품</h3>
+                    <div id="agePopularItems" class="popular-items-list">
+                        <!-- JavaScript로 내용이 채워질 곳 -->
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <h3>성별별 가장 많이 구매한 상품</h3>
+                    <div id="genderPopularItems" class="popular-items-list">
+                        <!-- JavaScript로 내용이 채워질 곳 -->
+                    </div>
+            </div>
+
             <!-- 구매 상세 내역 모달 -->
             <div id="purchaseDetailModal" class="modal">
                 <div class="modal-content">
@@ -433,7 +634,362 @@ try {
         function closeModal() {
             document.getElementById("purchaseDetailModal").style.display = "none";
         }
-        
+        // 통계 데이터 로드 함수
+        // 기존 loadStatistics 함수 수정
+        // 전역 변수로 차트 객체들을 저장
+let ageChartInstance = null;
+let genderChartInstance = null;
+let popularItemsChartInstance = null;
+let monthlySalesChartInstance = null; 
+function loadStatistics() {
+    console.log("통계 데이터 로드 시작...");
+    
+    fetch('get_statistics.php')
+        .then(response => {
+            console.log("응답 상태:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("받은 데이터:", data);
+            
+            // 데이터가 비어있는지 확인
+            if (!data || Object.keys(data).length === 0) {
+                console.error("데이터가 비어있습니다!");
+                return;
+            }
+            
+            // 차트 그리기 전에 기존 차트 파괴
+            if (ageChartInstance) {
+                ageChartInstance.destroy();
+            }
+            if (genderChartInstance) {
+                genderChartInstance.destroy();
+            }
+            if (popularItemsChartInstance) {
+                popularItemsChartInstance.destroy();
+            }
+            // 요약 데이터 표시 (새로 추가)
+            if (data.summary) {
+                document.getElementById('totalSales').innerText = data.summary.total_sales ? data.summary.total_sales.toLocaleString() + '원' : '0원';
+                document.getElementById('totalPurchases').innerText = data.summary.total_purchases ? data.summary.total_purchases.toLocaleString() + '건' : '0건';
+                document.getElementById('totalUsers').innerText = data.summary.total_users ? data.summary.total_users.toLocaleString() + '명' : '0명';
+            } else {
+                document.getElementById('totalSales').innerText = '0원';
+                document.getElementById('totalPurchases').innerText = '0건';
+                document.getElementById('totalUsers').innerText = '0명';
+            }
+            // 차트 그리기
+            if (data.age_stats && data.age_stats.length > 0) {
+                ageChartInstance = createAgeChart(data.age_stats);
+            }
+            
+            if (data.gender_stats && data.gender_stats.length > 0) {
+                genderChartInstance = createGenderChart(data.gender_stats);
+            }
+            
+            if (data.popular_items && data.popular_items.length > 0) {
+                popularItemsChartInstance = createPopularItemsChart(data.popular_items);
+            }
+             if (data.monthly_sales && data.monthly_sales.length > 0) { // 이 부분 추가
+                monthlySalesChartInstance = createMonthlySalesChart(data.monthly_sales);
+            }
+            
+            // 나이대별/성별별 인기 상품 표시
+            displayAgePopularItems(data.age_popular_items);
+            displayGenderPopularItems(data.gender_popular_items);
+        })
+        .catch(error => {
+            console.error('통계 데이터 로드 오류:', error);
+        });
+}
+
+        // 월별 매출 추이 차트 생성 함수 (새로 추가)
+        function createMonthlySalesChart(data) {
+            const ctx = document.getElementById('monthlySalesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line', // 라인 그래프
+                data: {
+                    labels: data.map(item => item.month),
+                    datasets: [{
+                        label: '월별 매출',
+                        data: data.map(item => item.monthly_sales),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '매출액 (원)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '월'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // 나이대별 가장 많이 구매한 상품 표시 함수 (새로 추가)
+        function displayAgePopularItems(data) {
+            const container = document.getElementById('agePopularItems');
+            container.innerHTML = ''; // 기존 내용 초기화
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'popular-item';
+                    div.innerHTML = `
+                        <span class="popular-item-age">${item.age_group}</span>
+                        <span class="popular-item-name">${item.itemname}</span>
+                        <span class="popular-item-quantity">${item.total_quantity}개</span>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = '<p>데이터가 없습니다.</p>';
+            }
+        }
+
+        // 성별별 가장 많이 구매한 상품 표시 함수 (새로 추가)
+        function displayGenderPopularItems(data) {
+            const container = document.getElementById('genderPopularItems');
+            container.innerHTML = ''; // 기존 내용 초기화
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'popular-item';
+                    div.innerHTML = `
+                        <span class="popular-item-gender">${item.gender}</span>
+                        <span class="popular-item-name">${item.itemname}</span>
+                        <span class="popular-item-quantity">${item.total_quantity}개</span>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = '<p>데이터가 없습니다.</p>';
+            }
+        }
+
+
+                // 나이대별 차트 생성 함수
+                function createAgeChart(data) {
+                var ctx = document.getElementById('ageChart').getContext('2d');
+                return new Chart(ctx, {
+                    // 기존 설정 유지
+                    type: 'bar',
+                    data: {
+                        labels: data.map(item => item.age_group),
+                        datasets: [{
+                            label: '구매 건수',
+                            data: data.map(item => item.purchase_count || item.count || 0),
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        indexAxis: 'y', // 가로 막대 차트로 변경
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: '나이대별 구매 통계'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            },
+                            x: { // X축 (나이대 라벨) 설정
+                                ticks: {
+                                    font: {
+                                        size: 11 // X축 라벨 폰트 크기 줄이기
+                                    },
+                                    maxRotation: 0, // 라벨 회전 없애기
+                                    minRotation: 0  // 라벨 회전 없애기
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+
+                // 성별 차트 생성 함수
+                function createGenderChart(data) {
+                    console.log("성별 데이터:", data); // 데이터 구조 확인용
+                    
+                    var ctx = document.getElementById('genderChart').getContext('2d');
+                    return new Chart(ctx, {
+                        type: 'bar', // 'pie'에서 'bar'로 변경
+                        data: {
+                            labels: data.map(item => item.gender),
+                            datasets: [{
+                                label: '구매 건수',
+                                data: data.map(item => item.purchase_count || item.count || 0),
+                                backgroundColor: [
+                                    'rgba(54, 162, 235, 0.7)', // 남성 (파랑)
+                                    'rgba(255, 99, 132, 0.7)'  // 여성 (빨강)
+                                ],
+                                borderColor: [
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 99, 132, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            scales: { // 막대 차트니까 scales 옵션 추가
+                                y: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: '구매 건수'
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '성별'
+                                    },
+                                    ticks: {
+                                    font: {
+                                        size: 11 // X축 라벨 폰트 크기 줄이기
+                                    },
+                                    maxRotation: 0, // 라벨 회전 없애기
+                                    minRotation: 0  // 라벨 회전 없애기
+                                }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false, // 범례 숨기기 (막대 차트에선 필요 없음)
+                                },
+                                title: {
+                                    display: true,
+                                    text: '성별 구매 통계'
+                                }
+                            }
+                        }
+                    });
+                }
+
+
+                function createPopularItemsChart(data) {
+                var ctx = document.getElementById('popularItemsChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',  // 'horizontalBar' 대신 'bar' 사용
+                    data: {
+                        labels: data.map(item => item.itemname),
+                        datasets: [{
+                            label: '판매량',
+                            data: data.map(item => item.total_quantity),
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',  // 이 옵션을 추가해서 가로 막대 차트로 변경
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            x: { // X축 (수량) 설정
+                                beginAtZero: true
+                            },
+                            y: { // Y축 (상품명 라벨) 설정 - 가로 막대에서는 이 축이 가로 공간에 영향
+                                ticks: {
+                                    font: {
+                                        size: 11 // Y축 라벨 폰트 크기 줄이기
+                                    },
+                                    maxRotation: 0, // 라벨 회전 없애기
+                                    minRotation: 0  // 라벨 회전 없애기
+                                },
+                                grid: {
+                                    display: false // Y축 그리드 라인 숨기기 (더 깔끔하게)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        // 월별 매출 추이 차트 생성 함수
+function createMonthlySalesChart(data) {
+    const ctx = document.getElementById('monthlySalesChart').getContext('2d');
+    return new Chart(ctx, { // return 추가
+        type: 'line', // 라인 그래프
+        data: {
+            labels: data.map(item => item.month),
+            datasets: [{
+                label: '월별 매출',
+                data: data.map(item => item.monthly_sales),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '매출액 (원)'
+                    }
+                },
+                x: { // X축 (월 라벨) 설정
+                    title: {
+                        display: true,
+                        text: '월'
+                    },
+                    ticks: {
+                        font: {
+                            size: 11 // X축 라벨 폰트 크기 줄이기
+                        },
+                        maxRotation: 0, // 라벨 회전 없애기
+                        minRotation: 0  // 라벨 회전 없애기
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+        // 탭 클릭 시 통계 데이터 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            var statisticsTab = document.querySelector('.tab-btn[onclick="openTab(\'statistics\')"]');
+            if (statisticsTab) {
+                statisticsTab.addEventListener('click', function() {
+                    loadStatistics();
+                });
+            }
+        });
+
         // 회원 검색 함수
         function searchMembers() {
             var input = document.getElementById("memberSearch").value.toLowerCase();

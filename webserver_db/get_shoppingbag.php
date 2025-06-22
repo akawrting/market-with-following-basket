@@ -1,20 +1,20 @@
 <?php
-// get_shoppingbag.php
-$host = "127.0.0.1";
-$db = "famarket";
-$user = "famarket";
-$pass = "qpalzm1029!";
+session_start();
+require_once 'db_connect.php';
 
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+// 모든 장바구니 아이템 가져오기 (userid 구분 없이)
+$stmt = $conn->prepare("
+  SELECT sb.id, sb.itemname, sb.itemnum, sb.totalprice, it.image_url 
+  FROM sbtable sb
+  LEFT JOIN itemtable it ON sb.itemname = it.itemname
+");
+$stmt->execute();
+$result = $stmt->get_result();
 
-    $stmt = $conn->prepare("SELECT itemid, itemname, itemnum, totalprice FROM sbtable");
-    $stmt->execute();
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    echo json_encode($items);
-} catch (PDOException $e) {
-    echo json_encode(["error" => $e->getMessage()]);
+$items = [];
+while ($row = $result->fetch_assoc()) {
+  $items[] = $row;
 }
+
+echo json_encode($items);
 ?>
