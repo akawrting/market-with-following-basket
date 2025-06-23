@@ -1,1 +1,0 @@
-total_price=30000
