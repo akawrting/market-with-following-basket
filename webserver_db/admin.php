@@ -262,6 +262,7 @@ try {
         .inventory-btn:hover {
             background-color: #2980b9;
         }
+        
         /* 기존 스타일에 추가 */
     .stats-grid {
         display: grid;
@@ -522,6 +523,15 @@ try {
                     </table>
                 </div>
             </div>
+            <!-- 구매 상세 내역 모달 -->
+            <div id="purchaseDetailModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>구매 상세 내역</h2>
+                    <div id="purchaseDetailContent"></div>
+                </div>
+            </div>
+
             <!-- 구매 통계 탭 -->
             <div id="statistics" class="tab-content">
                 <h2>구매 통계 분석</h2>
@@ -627,13 +637,30 @@ try {
                     document.getElementById("purchaseDetailModal").style.display = "block";
                 }
             };
+            // 닫기 버튼에 이벤트 리스너 추가
+            var closeBtn = document.querySelector("#purchaseDetailModal .close");
+            if(closeBtn) {
+                closeBtn.onclick = function() {
+                    document.getElementById("purchaseDetailModal").style.display = "none";
+                }
+            }
             xhr.send();
+            
         }
         
         // 모달 닫기 함수
         function closeModal() {
             document.getElementById("purchaseDetailModal").style.display = "none";
         }
+        // 페이지 로드 시 닫기 버튼에 이벤트 리스너 추가
+        window.onload = function() {
+            var closeBtn = document.querySelector("#purchaseDetailModal .close");
+            if(closeBtn) {
+                closeBtn.onclick = function() {
+                    document.getElementById("purchaseDetailModal").style.display = "none";
+                }
+            }
+        };
         // 통계 데이터 로드 함수
         // 기존 loadStatistics 함수 수정
         // 전역 변수로 차트 객체들을 저장
