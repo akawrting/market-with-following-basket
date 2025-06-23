@@ -1,8 +1,0 @@
-.DS_Store
-.vscode/
-log.txt
-out/
-*.swp
-.idea/
-config.php
-*.real.php
