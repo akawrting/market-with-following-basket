@@ -41,9 +41,9 @@ function send_ros2_command($command) {
 // POST 요청 처리
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'send_command') {
-        // 네비게이션 명령어 설정
-        $ros2_command = "ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \"{pose: {header: {frame_id: 'map'}, pose: {position: {x: 1.255, y: -1.7, z: 0.0}, orientation: {x: 0.0, y: 0.0, z: 0.26, w: 0.96}}}}\"";
-        
+        // 터미널 명령어 설정
+        $ros2_command = "ls";
+       
         // 명령어 전송
         $result = send_ros2_command($ros2_command);
         
