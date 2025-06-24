@@ -7,16 +7,48 @@ namespace Composer\Autoload;
 class ComposerStaticInitf84832d2d25320d22f7c95d3130afc0b
 {
     public static $prefixLengthsPsr4 = array (
-        'H' => 
+        'W' => 
         array (
-            'HomePc\\Htdocs\\' => 14,
+            'WebSocket\\' => 10,
+        ),
+        'R' => 
+        array (
+            'Rextalk\\Websocket\\' => 18,
+        ),
+        'P' => 
+        array (
+            'Psr\\Log\\' => 8,
+            'Psr\\Http\\Message\\' => 17,
+            'Phrity\\Util\\' => 12,
+            'Phrity\\Net\\' => 11,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'HomePc\\Htdocs\\' => 
+        'WebSocket\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/textalk/websocket/lib',
+        ),
+        'Rextalk\\Websocket\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Phrity\\Util\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/util-errorhandler/src',
+        ),
+        'Phrity\\Net\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/net-uri/src',
         ),
     );
 

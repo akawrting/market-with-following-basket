@@ -288,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['phone'])) {
             </div>
             <?php endif; ?>
             
-            <a href="http://127.0.0.1:8080/welcome.php" class="home-button">홈으로 돌아가기</a>
+            <a href="http://127.0.0.1:8080/send_to_ros.php" class="home-button">쇼핑 종료</a>
         <?php endif; ?>
     </div>
 </body>

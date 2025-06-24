@@ -105,7 +105,7 @@ if ($check_data->num_rows == 0) {
                     
                     // 7초 후 페이지 이동
                     setTimeout(function() {
-                        window.location.href = 'start_shopping.php';
+                        window.location.href = 'send_to_track.php';
                     }, 7000);
                 }
             };
