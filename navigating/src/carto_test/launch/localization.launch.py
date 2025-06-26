@@ -12,11 +12,11 @@ def generate_launch_description():
     cartographer_config_dir = LaunchConfiguration('cartographer_config_dir',
                                                 default=os.path.join(pkg_carto_test , 'config'))
     # cartographer setting file 2
-    configuration_basename = LaunchConfiguration('configuration_basename', default='cartographer.lua') ## cartographer.lua : mapping, localization.lua: localization
+    configuration_basename = LaunchConfiguration('configuration_basename', default='localization.lua') ## cartographer.lua : mapping, localization.lua: localization
     resolution = LaunchConfiguration('resolution', default='0.05')
     publish_period_sec = LaunchConfiguration('publish_period_sec', default='0.5')
     pbstream_file = LaunchConfiguration('pbstream_dir',
-                                                default=os.path.join(pkg_carto_test, 'map', 'my_room.pbstream')) # Path to the pbstream file
+                                                default=os.path.join(pkg_carto_test, 'map', 'my_room2.pbstream')) # Path to the pbstream file
 
     sim_time_arg = DeclareLaunchArgument(
         'use_sim_time', default_value='False',

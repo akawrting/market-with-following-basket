@@ -1,8 +1,19 @@
 import cv2
 from picamera2 import Picamera2
 from libcamera import Transform
-from gpiozero import PWMOutputDevice, DigitalOutputDevice, DistanceSensor
+from gpiozero import PWMOutputDevice, DigitalOutputDevice, DistanceSensor, RGBLED
 from time import sleep
+import asyncio
+import websockets
+import json
+import os
+
+# 웹소켓 서버 주소 (노트북의 IP 주소와 포트)
+SERVER_IP = "192.168.137.1"  # 노트북의 실제 IP 주소로 변경
+SERVER_PORT = 8989
+WEBSOCKET_SERVER_URL = f"ws://{SERVER_IP}:{SERVER_PORT}"
+
+rgbled = RGBLED(red=5, green=6, blue=13, active_high=True) 
 
 # === GPIO 핀 설정 ===
 PWMA = PWMOutputDevice(18)
@@ -17,7 +28,10 @@ front_sensor = DistanceSensor(echo=10, trigger=9, max_distance=2.0)
 left_sensor = DistanceSensor(echo=17, trigger=4, max_distance=2.0)
 right_sensor = DistanceSensor(echo=8, trigger=7, max_distance=2.0)
 
-
+# === 상태 변수 ===
+current_state = "stop"  # 기본 상태는 정지
+autonomous_task = None  # 자율주행 작업 추적
+last_state = "stop"  # 마지막 상태 추적
 
 # === 모터 제어 함수 ===
 def stop_motors():
@@ -27,97 +41,33 @@ def stop_motors():
 def move_forward():
     AIN1.value, AIN2.value = 0, 1
     BIN1.value, BIN2.value = 0, 1
-    PWMA.value = 0.6
-    PWMB.value = 0.6
+    PWMA.value = 1
+    PWMB.value = 1
 
 def turn_left():
     AIN1.value, AIN2.value = 1, 0
     BIN1.value, BIN2.value = 0, 1
-    PWMA.value = 0.3
-    PWMB.value = 0.3
+    PWMA.value = 0.6
+    PWMB.value = 0.6
 
 def turn_right():
     AIN1.value, AIN2.value = 0, 1
     BIN1.value, BIN2.value = 1, 0
-    PWMA.value = 0.3
-    PWMB.value = 0.3
+    PWMA.value = 0.6
+    PWMB.value = 0.6
 
 def soft_turn_left():
     AIN1.value, AIN2.value = 0, 0
     BIN1.value, BIN2.value = 0, 1
-    PWMA.value = 0.6
-    PWMB.value = 0.6
+    PWMA.value = 1
+    PWMB.value = 1
 
 def soft_turn_right():
     AIN1.value, AIN2.value = 0, 1
     BIN1.value, BIN2.value = 0, 0
-    PWMA.value = 0.6
-    PWMB.value = 0.6
+    PWMA.value = 1
+    PWMB.value = 1
 
-# === 장애물 회피 함수 ===
-def obstacle_avoidance():
-    global last_avoid  # <- 전역변수 사용 명시
-    front = front_sensor.distance * 100
-    left = left_sensor.distance * 100
-    right = right_sensor.distance * 100
-
-    print(f"거리 - 정면: {front:.1f}cm, 왼쪽: {left:.1f}cm, 오른쪽: {right:.1f}cm")
-
-    if front < 20:
-        if left < 10:
-            print("↩️ 왼쪽 회피")
-            turn_left()
-            last_avoid = "left"
-        elif right < 10:
-            print("↪️ 오른쪽 회피")
-            turn_right()
-            last_avoid = "right"
-        elif left >= 10 and right >= 10:
-            print("대상과 적정거리 유지")
-            stop_motors()
-            sleep(5)
-
-        
-
-        # 원래 방향 복원
-        # if last_avoid == "left":
-        #     print("↪️ 오른쪽 복귀")
-        #     turn_right()
-        #     sleep(1)
-        # elif last_avoid == "right":
-        #     print("↩️ 왼쪽 복귀")
-        #     turn_left()
-        #     sleep(1)
-
-        # print("⬆️ 전진 복귀")
-        # move_forward()
-        # sleep(0.5)
-        # return True
-
-    elif left < 20 and right >= 20:
-        print("🐍 왼쪽에 장애물 → 오른쪽 휘어서 진행")
-        soft_turn_right()
-        sleep(0.3)
-        return True
-
-    elif right < 20 and left >= 20:
-        print("🐍 오른쪽에 장애물 → 왼쪽 휘어서 진행")
-        soft_turn_left()
-        sleep(0.3)
-        return True
-
-    elif left < 20 and right < 20:
-        print("❗ 양옆 장애물 → 정면 확인 후 정지 또는 회피")
-        if front > 20:
-            print("⬆️ 전진 가능")
-            move_forward()
-        else:
-            print("🛑 양옆 + 정면 장애물 → 멈춤")
-            stop_motors()
-        sleep(0.3)
-        return True
-
-    return False  # 회피 필요 없음
 
 classNames = {0: 'background',
               1: 'person', 2: 'bicycle', 3: 'car', 4: 'motorcycle', 5: 'airplane', 6: 'bus',
@@ -140,7 +90,7 @@ classNames = {0: 'background',
 def id_class_name(class_id, classes):
     return classes.get(class_id, "Unknown")
 
-def main():
+async def autonomous_driving():
     camera = Picamera2()
     camera.configure(camera.create_preview_configuration(
         main={"format": 'XRGB8888', "size": (640, 480)},
@@ -167,7 +117,7 @@ def main():
             print("🚨 에러: DNN 모델을 로드할 수 없습니다. 파일 경로와 파일 손상 여부를 확인하세요.")
             return
         last_state = "stop"
-        while True:
+        while current_state == "run":
             keyValue = cv2.waitKey(1)
         
             if keyValue == ord('q') :
@@ -210,6 +160,7 @@ def main():
                     if box_y_min < 50:
                         stop_motors()
                         print("대상과 적정거리 유지")
+                        rgbled.color = (0, 1, 0)  # 초록색
                     
                     elif left < 20:
                         soft_turn_right()
@@ -223,21 +174,21 @@ def main():
                         #if not obstacle_avoidance():
                             soft_turn_left()
                             print("목표가 왼쪽에 있음")
+                            rgbled.color = (0, 1, 0)  # 초록색
                             last_state = "left"
                     elif box_center_x > image_width // 2 + 40:
                         #if not obstacle_avoidance():
                             soft_turn_right()
                             last_state = "right"
+                            rgbled.color = (0, 1, 0)  # 초록색
                             print("목표가 오른쪽에 있음")
                     else :
                         #if not obstacle_avoidance():
                             move_forward()
                             print("목표가 정면에 있음")
+                            rgbled.color = (0, 1, 0)  # 초록색
+                            sleep(1)
                     
-                    
-                    # if front < 30:
-                    #     stop_motors()
-                    #     print("대상과 적정거리 유지")
 
                     text_x = box_x_min
                     text_y = box_y_min - 10 if box_y_min - 10 > 10 else box_y_min + 20 
@@ -250,18 +201,27 @@ def main():
                 if last_state == "left":
                     turn_left()
                     print("마지막 위치 왼쪽")
+                    rgbled.color = (1, 0, 0)
+                    
                 elif last_state == "right":
                     turn_right()
                     print("마지막 위치 오른쪽")
+                    rgbled.color = (1, 0, 0)
                 # stop_motors()
                 # print("사람이 감지되지 않음, 정지")
 
             cv2.imshow('Object Detection Result', image)
+            await asyncio.sleep(0.1)
                         
     except KeyboardInterrupt:
         print("\n프로그램을 종료합니다. (Ctrl+C 감지)")
     except Exception as e:
         print(f"🚨 예상치 못한 에러 발생: {e}")
+    except asyncio.CancelledError:
+        # CancelledError 발생 시 정리 작업
+        print("자율주행 작업 취소됨")
+        stop_motors()
+        camera.close()
     finally:
         try:
             if 'camera' in locals() and camera.started:
@@ -271,6 +231,41 @@ def main():
             print(f"🚨 경고: Picamera2 중지 중 에러 발생: {e}")
         cv2.destroyAllWindows()
 
+# === WebSocket 처리 ===
+async def handle_websocket():
+    print(f"웹소켓 서버에 연결 중: {WEBSOCKET_SERVER_URL}")
+    global current_state, autonomous_task
 
-if __name__ == '__main__':
-    main()
+    while True:
+        try:
+            async with websockets.connect(WEBSOCKET_SERVER_URL) as websocket:
+                print("웹소켓 서버에 연결되었습니다.")
+                while True:
+                    message = await websocket.recv()
+                    data = json.loads(message)
+                    command = data.get("command")
+
+                    if command == "run" and current_state != "run":
+                        current_state = "run"
+                        if autonomous_task:
+                            autonomous_task.cancel()
+                            await autonomous_task
+                        autonomous_task = asyncio.create_task(autonomous_driving())
+
+                    elif command == "stop" and current_state != "stop":
+                        current_state = "stop"
+                        if autonomous_task:
+                            autonomous_task.cancel()
+                            await autonomous_task
+                        stop_motors()
+                        rgbled.color = (0, 0, 0)
+        except Exception as e:
+            print(f"WebSocket Error: {e}")
+        await asyncio.sleep(5)
+
+async def main():
+    await handle_websocket()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
