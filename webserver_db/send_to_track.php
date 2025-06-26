@@ -49,7 +49,7 @@ function send_command_via_websocket($command) {
 
 // --- 페이지 로드 시 자동으로 명령어 전송 ---
 // 전송할 명령어 설정
-$command_to_execute = "pyhon3 tracking/person_tracking.py"; 
+$command_to_execute = "run"; 
 
 // 명령어 전송 함수 호출
 $is_sent = send_command_via_websocket($command_to_execute);
@@ -64,6 +64,9 @@ if ($is_sent) {
     $status_message = "명령어 '" . htmlspecialchars($command_to_execute) . "' 전송에 실패했습니다. 서버 로그를 확인해주세요.";
     $status_class = "error";
 }
+
+// 명령어 전송 후 shoppingbag.php로 리다이렉트
+header("Refresh: 2; URL=shoppingbag.php");
 ?>
 
 <!DOCTYPE html>
@@ -114,7 +117,7 @@ if ($is_sent) {
         <div class="status-box <?php echo $status_class; ?>">
             <?php echo $status_message; ?>
         </div>
-        <p>이 페이지는 잠시 후 다른 페이지로 리다이렉트될 수 있습니다.</p>
+        <p>잠시 후 장바구니 페이지로 이동합니다...</p>
     </div>
 </body>
 </html>

@@ -392,7 +392,35 @@ $username = "고객";  // 기본값
         font-size: 14px;
       }
     }
-    
+    .search-btn {
+      background: linear-gradient(87deg, var(--primary-color) 0, #825ee4 100%);
+      color: white;
+      border: none;
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+      margin-top: 20px;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .search-btn:active {
+      transform: translateY(1px);
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
     /* 스크롤바 스타일링 */
     ::-webkit-scrollbar {
       width: 8px;
@@ -411,6 +439,7 @@ $username = "고객";  // 기본값
     ::-webkit-scrollbar-thumb:hover {
       background: #a8a8a8;
     }
+    
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -434,6 +463,8 @@ $username = "고객";  // 기본값
         <i class="fas fa-shopping-cart"></i>
       </div>
       <div class="empty-message">담은 상품이 없습니다.</div>
+      <!-- 여기에 search.php로 리다이렉트되는 버튼 추가 -->
+      <button class="search-btn" onclick="location.href='search.php';">찾는 상품이 있으신가요?</button>
     </div>
     
     <div class="checkout-container" style="text-align: center; margin-top: 40px;">
@@ -456,7 +487,8 @@ function updateShoppingBag() {
       if (data.length === 0) {
         bag.innerHTML = `
           <div class="empty-bag-icon"><i class="fas fa-shopping-cart"></i></div>
-          <div class="empty-message">담은 상품이 없습니다.</div>`;
+          <div class="empty-message">담은 상품이 없습니다.</div>
+          <button class="search-btn" onclick="location.href='search.php';">찾는 상품이 있으신가요?</button>`;
         return;
       }
 
@@ -477,7 +509,7 @@ function updateShoppingBag() {
       data.forEach(item => {
         // 이미지 URL이 있으면 이미지 태그, 없으면 빈 공간 표시
         let imageHtml = '';
-                if (item.image_url && item.image_url.trim() !== '') {
+        if (item.image_url && item.image_url.trim() !== '') {
           imageHtml = `<img src="${item.image_url}" class="item-image" alt="${item.itemname}">`;
         } else {
           imageHtml = `<div class="no-image"><i class="fas fa-image"></i></div>`;
@@ -501,6 +533,9 @@ function updateShoppingBag() {
           <span class="total-label">총 결제금액:</span>
           <span class="total-amount">${totalAmount.toLocaleString()} 원</span>
         </div>
+        <div class="button-container">
+          <button class="search-btn" onclick="location.href='search.php';">찾는 상품이 있으신가요?</button>
+        </div>
       `;
       
       bag.innerHTML = html;
@@ -509,6 +544,7 @@ function updateShoppingBag() {
       console.error("장바구니 불러오기 오류:", error);
     });
 }
+
 
 // 1초마다 장바구니 업데이트
 setInterval(updateShoppingBag, 1000);
