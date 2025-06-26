@@ -303,13 +303,14 @@
     
     <div id="welcome">
       <div class="success-icon">✓</div>
-      <div class="success-text">인증이 완료되었습니다!</div>
+      <div class="success-text">인증이 완료되었습니다!</div>     
     </div>
   </div>
   
   <div class="qr-container">
     <img src="img/signup_qrcode.png" alt="QR 코드" class="qr-code">
   </div>
+  
 </div>
 
 <script>
@@ -477,7 +478,7 @@ function verifyCode() {
   document.getElementById("verifyBtn").textContent = "인증 확인 중...";
   document.getElementById("verifyBtn").disabled = true;
 
-  fetch("verify_code.php", {
+  fetch("enter_verify.php", {
     method: "POST",
     headers: {"Content-Type": "application/x-www-form-urlencoded"},
     body: "phone=" + encodeURIComponent(phoneValue) + "&code=" + encodeURIComponent(codeValue)
@@ -499,7 +500,7 @@ function verifyCode() {
       
       // 바로 리다이렉트
       setTimeout(() => {
-        location.href = "shoppingbag.php";
+        location.href = "enterance.html";
       }, 1000);
     } else {
       document.getElementById("verifyBtn").textContent = "인증 확인";
