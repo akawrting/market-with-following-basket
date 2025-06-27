@@ -9,7 +9,7 @@ const onClickPay = async () => {
         pg: "kakaopay",
         pay_method: "card",
         amount: pay_amount,
-        name: "저는 님을 벗겨먹으러 온 사람입니다",
+        name: "무인매장",
         merchant_uid: merchantUid,
     }, 
     function(response){

@@ -30,6 +30,14 @@ def index(request):
         # sbtable에서 상품 정보 가져오기
         cursor.execute("SELECT itemname, itemnum, totalprice FROM sbtable")
         sbtable_items = cursor.fetchall()
+        
+        # sbtable의 총 금액 계산 (원래 금액)
+        cursor.execute("SELECT SUM(totalprice) as total FROM sbtable")
+        total_result = cursor.fetchone()
+        original_price = total_result['total'] if total_result and total_result['total'] else 0
+        
+        # 사용한 포인트 계산 (원래 금액 - 최종 결제 금액)
+        used_points = original_price - pay_amount
             
         cursor.close()
         conn.close()
@@ -38,10 +46,14 @@ def index(request):
         print(f"DB 연결 오류: {e}")
         pay_amount = 0
         sbtable_items = []
+        original_price = 0
+        used_points = 0
     
     return render(request, 'payment/index.html', {
         "pay_amount": pay_amount,
-        "sbtable": sbtable_items
+        "sbtable": sbtable_items,
+        "used_points": used_points,
+        "original_price": original_price
     })
 
 def payment_success(request):

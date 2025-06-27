@@ -95,7 +95,7 @@ if ($is_sent) {
             border: 1px solid #f5c6cb;
         }
     </style>
-    <meta http-equiv="refresh" content="3;url=enterance.html">
+    <meta http-equiv="refresh" content="3;url=welcome.php">
 </head>
 <body>
     <div class="container">
