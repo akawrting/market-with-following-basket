@@ -21,12 +21,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["phone"]) && isset($_P
             $conn = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $username, $password);
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+            // 트랜잭션 시작
+            $conn->beginTransaction();
+
+            // 입장 기록 저장
             $stmt = $conn->prepare("INSERT INTO entertbl (phonenum, enter_time) VALUES (:phone, NOW())");
             $stmt->bindParam(":phone", $phone);
             $stmt->execute();
 
+            // gatetbl의 status를 현재 값의 NOT 연산으로 업데이트 (토글)
+            // MySQL에서 NOT은 ! 또는 NOT 키워드를 사용
+            $stmt = $conn->prepare("UPDATE gatetbl SET status = NOT status");
+            $stmt->execute();
+
+            // 트랜잭션 커밋
+            $conn->commit();
+
             echo "success";
         } catch (PDOException $e) {
+            // 오류 발생 시 트랜잭션 롤백
+            $conn->rollBack();
             http_response_code(500);
             echo "DB 오류: " . $e->getMessage();
         }

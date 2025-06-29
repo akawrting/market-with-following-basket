@@ -58,6 +58,33 @@
             background-color: #f8f9fa;
         }
         
+        .payment-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .payment-summary p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        
+        .payment-summary .original-price {
+            color: #495057;
+        }
+        
+        .payment-summary .used-points {
+            color: #fa5252;
+        }
+        
+        .payment-summary .final-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #212529;
+            margin-top: 10px;
+        }
+        
         .total-amount {
             font-size: 24px;
             font-weight: 700;
@@ -130,8 +157,12 @@
             </tbody>
         </table>
         
-        <div class="total-amount">
-            결제 금액: <span id="pay-amount" data-amount="{{pay_amount}}">{{ pay_amount }}원</span>
+        <!-- 포인트 사용 정보 추가 -->
+        <div class="payment-summary">
+            <p class="original-price">상품 금액: {{ original_price }}원</p>
+            <p class="used-points">포인트 사용: -{{ used_points }}원</p>
+            <p class="final-price">최종 결제 금액: <span id="pay-amount" data-amount="{{pay_amount}}">{{ pay_amount }}원</span></p>
+
         </div>
         {% else %}
         <div class="empty-cart">
