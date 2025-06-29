@@ -3,7 +3,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 // 웹소켓 서버 주소 설정
-$websocket_server = "ws://192.168.137.1:8989"; // 노트북 IP 주소로 변경해야 함
+$websocket_server = "ws://192.168.0.7:8989"; // 노트북 IP 주소로 변경해야 함
 
 /**
  * 웹소켓으로 ROS2 명령어 전송하는 함수

@@ -5,7 +5,7 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 // 웹소켓 서버 주소 설정
-$websocket_server = "ws://192.168.137.1:8989"; 
+$websocket_server = "ws://192.168.0.7:8989"; 
 
 /**
  * 웹소켓으로 명령어를 JSON 형식으로 전송하는 함수

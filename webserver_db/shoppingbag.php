@@ -456,6 +456,19 @@ $username = "고객";  // 기본값
       <div class="welcome-text">오늘도 즐거운 쇼핑 되세요!</div>
     </div>
   </div>
+
+  <!-- 비상정지 모달 -->
+  <div id="emergency-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; text-align: center;">
+    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 90%; margin: auto;">
+      <h2 style="color: #e63946; margin-bottom: 15px;">⚠️ 비상 정지 알림</h2>
+      <p style="color: #333; font-size: 18px;">안전 문제로 인해 모든 동작이 일시적으로 중지되었습니다.</p>
+      <p style="color: #777; font-size: 14px;">아래 버튼을 눌러 동작을 재개하세요.</p>
+      <button id="resume-button" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">동작 재개</button>
+      <button onclick="closeEmergencyModal()" style="margin-top: 10px; padding: 10px 20px; background: #457b9d; color: white; border: none; border-radius: 5px; cursor: pointer;">닫기</button>
+    </div>
+  </div>
+
+
   
   <div class="container">
     <div class="shopping-bag">
@@ -482,7 +495,7 @@ function updateShoppingBag() {
     .then(response => response.json())
     .then(data => {
       const bag = document.querySelector(".shopping-bag");
-      bag.innerHTML = ""; // 초기화
+      bag.innerHTML = "";
 
       if (data.length === 0) {
         bag.innerHTML = `
@@ -507,7 +520,6 @@ function updateShoppingBag() {
       let totalAmount = 0;
 
       data.forEach(item => {
-        // 이미지 URL이 있으면 이미지 태그, 없으면 빈 공간 표시
         let imageHtml = '';
         if (item.image_url && item.image_url.trim() !== '') {
           imageHtml = `<img src="${item.image_url}" class="item-image" alt="${item.itemname}">`;
@@ -527,7 +539,6 @@ function updateShoppingBag() {
 
       html += `</tbody></table>`;
       
-      // 총 금액 섹션 추가
       html += `
         <div class="total-section">
           <span class="total-label">총 결제금액:</span>
@@ -545,14 +556,64 @@ function updateShoppingBag() {
     });
 }
 
-
-// 1초마다 장바구니 업데이트
 setInterval(updateShoppingBag, 1000);
-
-// 페이지 로딩 시 첫 실행
 window.onload = updateShoppingBag;
+
+// 모달 열기/닫기 함수
+function openEmergencyModal() {
+  const modal = document.getElementById('emergency-modal');
+  modal.style.display = 'flex';
+  // 자동 닫기 제거
+  // setTimeout(closeEmergencyModal, 10000);
+}
+
+function closeEmergencyModal() {
+  const modal = document.getElementById('emergency-modal');
+  modal.style.display = 'none';
+}
+
+// WebSocket 연결 및 비상정지 알림 처리
+const ws = new WebSocket("ws://127.0.0.1:8989");
+
+ws.onmessage = function (event) {
+  const data = JSON.parse(event.data);
+
+  if (data.event === "emergency_stop" && data.status === "activated") {
+    console.log("비상정지 알림 수신");
+    openEmergencyModal();
+  }
+};
+
+ws.onerror = function (error) {
+  console.error("WebSocket 오류:", error);
+};
+
+ws.onclose = function () {
+  console.log("WebSocket 연결이 닫혔습니다.");
+};
+
+// DOM 준비 후 resume-button 이벤트 등록
+window.addEventListener('DOMContentLoaded', () => {
+  const resumeBtn = document.getElementById('resume-button');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        const runCommand = {
+          type: "ros2_command",
+          command: "run",
+          timestamp: Date.now()
+        };
+        ws.send(JSON.stringify(runCommand));
+        console.log("동작 재개(run) 명령어 전송됨");
+        closeEmergencyModal();
+      } else {
+        alert("WebSocket 연결이 열려있지 않습니다. 페이지를 새로고침해주세요.");
+      }
+    });
+  }
+});
 </script>
+
 
 </body>
 </html>
-
